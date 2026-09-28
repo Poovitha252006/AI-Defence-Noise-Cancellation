@@ -2512,29 +2512,56 @@ function spectralNoiseReduction(
         Prevent silent output.
     */
 
-    if(
-        peak > 0
-    ){
+   
+/* AUTOMATIC VOLUME CONTROL */
 
-        const gain =
-            Math.min(
-                2,
-                0.92 / peak
-            );
+let envelope = 0;
+let currentGain = 1;
 
+const targetRMS = 0.10;
+const minRMS = 0.008;
+const attack = Math.exp(-1 / (sampleRate * 0.05));
+const release = Math.exp(-1 / (sampleRate * 0.25));
 
-        for(
-            let i=0;
-            i<result.length;
-            i++
-        ){
+for (let i = 0; i < result.length; i++) {
+    const sample = result[i];
 
-            result[i] *=
-                gain;
+    envelope =
+        0.995 * envelope +
+        0.005 * sample * sample;
 
-        }
+    const rms = Math.sqrt(envelope);
+    let targetGain = 1;
 
+    if (rms > minRMS) {
+        targetGain = Math.min(3, targetRMS / rms);
     }
+
+    const smoothing =
+        targetGain < currentGain ? attack : release;
+
+    currentGain =
+        smoothing * currentGain +
+        (1 - smoothing) * targetGain;
+
+    result[i] = sample * currentGain;
+}
+
+/* PREVENT CLIPPING */
+
+let maxPeak = 0;
+
+for (let i = 0; i < result.length; i++) {
+    maxPeak = Math.max(maxPeak, Math.abs(result[i]));
+}
+
+if (maxPeak > 0.95) {
+    const scale = 0.95 / maxPeak;
+
+    for (let i = 0; i < result.length; i++) {
+        result[i] *= scale;
+    }
+}
 
 
     return result;
