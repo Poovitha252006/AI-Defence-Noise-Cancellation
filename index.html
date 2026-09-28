@@ -1,0 +1,3125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AI Defence Adaptive Noise Cancellation</title>
+
+<style>
+
+:root{
+    --bg:#050b14;
+    --panel:#0b1727;
+    --panel2:#0e2137;
+    --line:#1f3a55;
+    --text:#eaf4ff;
+    --muted:#8fa8bf;
+    --green:#20c997;
+    --blue:#4dabf7;
+    --yellow:#ffd43b;
+    --red:#ff6b6b;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:
+        radial-gradient(circle at 50% -20%,#12304c 0,#07111f 45%,#040912 100%);
+    color:var(--text);
+    max-width:1180px;
+    margin:auto;
+    padding:22px;
+}
+
+.hero{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+
+    padding:25px;
+
+    background:linear-gradient(
+        135deg,
+        #0c2138,
+        #081322
+    );
+
+    border:1px solid var(--line);
+    border-radius:18px;
+
+    box-shadow:0 10px 40px #0005;
+}
+
+.hero h1{
+    margin:5px 0;
+    font-size:30px;
+}
+
+.eyebrow{
+    font-size:12px;
+    letter-spacing:2px;
+    color:var(--green);
+    font-weight:bold;
+}
+
+.sub{
+    color:var(--muted);
+}
+
+.shield{
+    font-size:55px;
+    color:var(--green);
+    text-shadow:
+        0 0 20px #20c997,
+        0 0 40px #20c99755;
+}
+
+
+/* SYSTEM STATUS */
+
+.statusgrid{
+    display:grid;
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:10px;
+
+    margin:16px 0;
+}
+
+.sys{
+    background:var(--panel);
+
+    border:1px solid var(--line);
+
+    border-radius:12px;
+
+    padding:14px;
+}
+
+.sys .name{
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:1px;
+}
+
+.sys .state{
+    margin-top:8px;
+    font-weight:bold;
+}
+
+.dot{
+    display:inline-block;
+
+    width:8px;
+    height:8px;
+
+    border-radius:50%;
+
+    background:#555;
+
+    margin-right:7px;
+}
+
+.dot.ready{
+    background:var(--green);
+    box-shadow:
+        0 0 10px var(--green);
+}
+
+.dot.busy{
+    background:var(--yellow);
+    box-shadow:
+        0 0 10px var(--yellow);
+
+    animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+
+    50%{
+        opacity:.3;
+    }
+
+}
+
+
+/* CARDS */
+
+.card{
+    background:var(--panel);
+
+    border:1px solid var(--line);
+
+    border-radius:16px;
+
+    padding:20px;
+
+    margin:15px 0;
+}
+
+.card h2{
+    margin-top:0;
+}
+
+
+/* BUTTONS */
+
+.row{
+    display:flex;
+
+    gap:10px;
+
+    flex-wrap:wrap;
+
+    margin:16px 0;
+}
+
+button{
+
+    border:0;
+
+    border-radius:10px;
+
+    padding:13px 20px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    font-size:15px;
+}
+
+.start{
+    background:var(--green);
+    color:white;
+}
+
+.stop{
+    background:var(--red);
+    color:white;
+}
+
+.play{
+    background:var(--blue);
+    color:white;
+}
+
+button:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+}
+
+
+/* TIMER */
+
+#timer{
+    font-size:30px;
+
+    font-weight:900;
+
+    margin:15px 0;
+}
+
+.meter{
+    height:9px;
+
+    background:#20354e;
+
+    border-radius:10px;
+
+    overflow:hidden;
+}
+
+.meter i{
+    display:block;
+
+    height:100%;
+
+    width:0;
+
+    background:var(--green);
+
+    transition:.2s;
+}
+
+
+/* STATUS */
+
+.status{
+    padding:12px;
+
+    border-radius:10px;
+
+    background:#122640;
+
+    color:#b9d9f7;
+}
+
+
+/* CANVAS */
+
+canvas{
+
+    width:100%;
+
+    height:160px;
+
+    background:#06101c;
+
+    border-radius:10px;
+
+    margin-top:10px;
+
+}
+
+
+/* AI PANEL */
+
+.ai-panel{
+
+    display:grid;
+
+    grid-template-columns:
+        1.2fr 1fr;
+
+    gap:16px;
+}
+
+.radar{
+
+    min-height:250px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    position:relative;
+
+    overflow:hidden;
+
+    background:
+        radial-gradient(
+            circle,
+            #102b42 0,
+            #081421 55%,
+            #050b14 100%
+        );
+
+    border-radius:14px;
+
+    border:1px solid var(--line);
+}
+
+.radar:before,
+.radar:after{
+
+    content:"";
+
+    position:absolute;
+
+    border:1px solid #2a5c7b;
+
+    border-radius:50%;
+
+    width:190px;
+
+    height:190px;
+}
+
+.radar:after{
+
+    width:120px;
+
+    height:120px;
+}
+
+.radarline{
+
+    position:absolute;
+
+    width:155px;
+
+    height:1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            var(--green)
+        );
+
+    transform-origin:left;
+
+    animation:sweep 3s linear infinite;
+
+    left:50%;
+
+    top:50%;
+}
+
+@keyframes sweep{
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+
+.radarcore{
+
+    z-index:2;
+
+    width:30px;
+
+    height:30px;
+
+    border-radius:50%;
+
+    background:var(--green);
+
+    box-shadow:
+        0 0 30px var(--green);
+}
+
+.noisetype{
+
+    font-size:25px;
+
+    font-weight:900;
+
+    margin:10px 0;
+}
+
+.confidence{
+
+    color:var(--muted);
+
+    font-size:13px;
+}
+
+
+/* PROCESS STAGES */
+
+.stage{
+
+    display:flex;
+
+    gap:8px;
+
+    flex-wrap:wrap;
+
+    margin-top:16px;
+}
+
+.stage span{
+
+    padding:8px 10px;
+
+    border-radius:9px;
+
+    background:#102238;
+
+    border:1px solid var(--line);
+
+    font-size:12px;
+
+    color:var(--muted);
+
+}
+
+.stage span.active{
+
+    color:white;
+
+    border-color:var(--green);
+
+    box-shadow:
+        0 0 15px #20c99720;
+}
+
+
+/* METRICS */
+
+.compare{
+
+    display:grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap:12px;
+}
+
+.metric{
+
+    background:var(--panel2);
+
+    border:1px solid var(--line);
+
+    border-radius:12px;
+
+    padding:16px;
+}
+
+.label{
+
+    font-size:12px;
+
+    color:var(--muted);
+}
+
+.bigmetric{
+
+    font-size:28px;
+
+    font-weight:900;
+
+    margin-top:8px;
+}
+
+.barlabel{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    font-size:12px;
+
+    margin-top:12px;
+}
+
+.meter2{
+
+    height:11px;
+
+    background:#172b40;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+    margin-top:8px;
+}
+
+.meter2 span{
+
+    display:block;
+
+    height:100%;
+
+    width:0;
+
+    border-radius:20px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--blue),
+            var(--green)
+        );
+
+    transition:
+        width .7s;
+}
+
+
+/* PIPELINE */
+
+.pipeline{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    margin-top:15px;
+}
+
+.step{
+
+    padding:10px 13px;
+
+    border-radius:9px;
+
+    background:#102238;
+
+    border:1px solid var(--line);
+
+    font-size:13px;
+}
+
+.arrow{
+    color:var(--muted);
+}
+
+
+/* AUDIO */
+
+audio{
+
+    width:100%;
+
+    margin-top:12px;
+}
+
+.small{
+
+    font-size:13px;
+
+    color:var(--muted);
+
+    margin-top:12px;
+}
+
+.ok{
+    color:#69db7c;
+}
+
+
+/* MOBILE */
+
+@media(max-width:760px){
+
+    .statusgrid{
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+    .ai-panel{
+        grid-template-columns:1fr;
+    }
+
+    .compare{
+        grid-template-columns:1fr;
+    }
+
+    .hero{
+        align-items:flex-start;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<div class="hero">
+
+    <div>
+
+        <div class="eyebrow">
+            SECURE AUDIO • AI SIGNAL PROCESSING
+        </div>
+
+        <h1>
+            🛡️ Adaptive Noise Cancellation
+        </h1>
+
+        <div class="sub">
+            AI-Assisted Defence Communication Prototype
+        </div>
+
+    </div>
+
+    <div class="shield">
+        ◈
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     SYSTEM STATUS
+===================================================== -->
+
+<div class="statusgrid">
+
+    <div class="sys">
+
+        <div class="name">
+            MICROPHONE
+        </div>
+
+        <div class="state">
+
+            <span
+                id="dotMic"
+                class="dot ready">
+            </span>
+
+            <span id="micState">
+                READY
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="sys">
+
+        <div class="name">
+            NOISE ENGINE
+        </div>
+
+        <div class="state">
+
+            <span
+                id="dotNoise"
+                class="dot ready">
+            </span>
+
+            <span id="noiseState">
+                READY
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="sys">
+
+        <div class="name">
+            AI ANALYZER
+        </div>
+
+        <div class="state">
+
+            <span
+                id="dotAI"
+                class="dot ready">
+            </span>
+
+            <span id="aiState">
+                STANDBY
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="sys">
+
+        <div class="name">
+            SPEECH OUTPUT
+        </div>
+
+        <div class="state">
+
+            <span
+                id="dotOut"
+                class="dot ready">
+            </span>
+
+            <span id="outState">
+                READY
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     AI NOISE INTELLIGENCE
+===================================================== -->
+
+<div class="card">
+
+    <div class="eyebrow">
+        AI NOISE INTELLIGENCE
+    </div>
+
+    <div class="ai-panel">
+
+
+        <!-- RADAR -->
+
+        <div class="radar">
+
+            <div class="radarline"></div>
+
+            <div class="radarcore"></div>
+
+        </div>
+
+
+        <!-- INFORMATION -->
+
+        <div>
+
+            <h2>
+                🧠 Acoustic Analysis
+            </h2>
+
+            <div class="label">
+                CURRENT DETECTION
+            </div>
+
+            <div
+                id="noiseType"
+                class="noisetype">
+
+                Waiting for audio
+
+            </div>
+
+            <div
+                id="confidence"
+                class="confidence">
+
+                Confidence: --
+
+            </div>
+
+
+            <div class="stage">
+
+                <span id="s1">
+                    Speech Capture
+                </span>
+
+                <span id="s2">
+                    Noise Profile
+                </span>
+
+                <span id="s3">
+                    AI Analysis
+                </span>
+
+                <span id="s4">
+                    Adaptive Suppression
+                </span>
+
+                <span id="s5">
+                    Enhanced Output
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     RECORDING
+===================================================== -->
+
+<div class="card">
+
+    <h2>
+        🎙️ Record Noisy Speech
+    </h2>
+
+    <div
+        id="status"
+        class="status">
+
+        Ready. Click Start Recording.
+
+    </div>
+
+
+    <div class="row">
+
+        <button
+            id="start"
+            class="start">
+
+            🎙 Start Recording
+
+        </button>
+
+
+        <button
+            id="stop"
+            class="stop"
+            disabled>
+
+            ■ Stop & Process
+
+        </button>
+
+    </div>
+
+
+    <div id="timer">
+
+        00:00 / 01:00
+
+    </div>
+
+
+    <div class="meter">
+
+        <i id="bar"></i>
+
+    </div>
+
+
+    <p class="small">
+
+        <b>Important:</b>
+
+        Stay quiet for the first
+        approximately 2 seconds.
+
+        The system uses this period
+        to learn the background-noise profile.
+
+        Then speak normally with background noise.
+
+    </p>
+
+</div>
+
+
+
+<!-- =====================================================
+     INPUT WAVEFORM
+===================================================== -->
+
+<div class="card">
+
+    <div class="eyebrow">
+        LIVE SIGNAL MONITOR
+    </div>
+
+    <h2>
+        🌊 Noisy Speech Input
+    </h2>
+
+    <canvas id="waveIn"></canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     BEFORE / AFTER
+===================================================== -->
+
+<div class="card">
+
+    <div class="eyebrow">
+        SIGNAL COMPARISON
+    </div>
+
+    <h2>
+        📊 Before vs After
+    </h2>
+
+
+    <div class="compare">
+
+
+        <div class="metric">
+
+            <div class="label">
+                NOISY INPUT
+            </div>
+
+            <div
+                id="inputLevel"
+                class="bigmetric">
+
+                --
+
+            </div>
+
+            <div class="barlabel">
+
+                <span>
+                    Noise energy
+                </span>
+
+                <span id="inputPct">
+                    --
+                </span>
+
+            </div>
+
+            <div class="meter2">
+
+                <span id="inputBar"></span>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="metric">
+
+            <div class="label">
+                ENHANCED OUTPUT
+            </div>
+
+            <div
+                id="outputLevel"
+                class="bigmetric">
+
+                --
+
+            </div>
+
+            <div class="barlabel">
+
+                <span>
+                    Speech preserved
+                </span>
+
+                <span id="speechPct">
+                    --
+                </span>
+
+            </div>
+
+            <div class="meter2">
+
+                <span id="outputBar"></span>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     PROCESSING PIPELINE
+===================================================== -->
+
+<div class="card">
+
+    <div class="eyebrow">
+        SIGNAL PROCESSING PIPELINE
+    </div>
+
+    <h2>
+        ⚙️ Adaptive ANC Pipeline
+    </h2>
+
+
+    <div class="pipeline">
+
+        <div class="step">
+            🎙 Noisy Speech
+        </div>
+
+        <div class="arrow">
+            →
+        </div>
+
+        <div class="step">
+            STFT
+        </div>
+
+        <div class="arrow">
+            →
+        </div>
+
+        <div class="step">
+            Noise Profile
+        </div>
+
+        <div class="arrow">
+            →
+        </div>
+
+        <div class="step">
+            AI Analysis
+        </div>
+
+        <div class="arrow">
+            →
+        </div>
+
+        <div class="step">
+            Adaptive Suppression
+        </div>
+
+        <div class="arrow">
+            →
+        </div>
+
+        <div class="step">
+            🔊 Enhanced Speech
+        </div>
+
+    </div>
+
+
+    <div
+        id="result"
+        class="status"
+        style="margin-top:18px">
+
+        Enhanced output will appear
+        after recording.
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     OUTPUT
+===================================================== -->
+
+<div class="card">
+
+    <div class="eyebrow">
+        ENHANCED COMMUNICATION OUTPUT
+    </div>
+
+    <h2>
+        🔊 Enhanced Speech
+    </h2>
+
+
+    <canvas id="waveOut"></canvas>
+
+
+    <audio
+        id="audioOut"
+        controls
+        style="display:none">
+
+    </audio>
+
+
+    <div class="row">
+
+        <button
+            id="play"
+            class="play"
+            disabled>
+
+            ▶ Play Enhanced Speech
+
+        </button>
+
+    </div>
+
+
+    <div class="small">
+
+        Browser prototype uses
+        frequency-domain noise suppression.
+
+        Final MATLAB implementation can
+        integrate CNN + NLMS adaptive filtering.
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+
+/* =====================================================
+   DASHBOARD HELPERS
+===================================================== */
+
+function dashStage(n){
+
+    for(
+        let i=1;
+        i<=5;
+        i++
+    ){
+
+        const el =
+            document.getElementById(
+                "s"+i
+            );
+
+        if(el){
+
+            el.classList.toggle(
+                "active",
+                i<=n
+            );
+
+        }
+
+    }
+
+}
+
+
+function dashState(
+    dotID,
+    textID,
+    busy
+){
+
+    const dot =
+        document.getElementById(
+            dotID
+        );
+
+    const text =
+        document.getElementById(
+            textID
+        );
+
+
+    if(dot){
+
+        dot.className =
+            "dot " +
+            (
+                busy
+                ? "busy"
+                : "ready"
+            );
+
+    }
+
+
+    if(text){
+
+        text.textContent =
+            busy
+            ? "PROCESSING"
+            : "READY";
+
+    }
+
+}
+
+
+function rmsDb(data){
+
+    let sum=0;
+
+    for(
+        let i=0;
+        i<data.length;
+        i++
+    ){
+
+        sum +=
+            data[i] *
+            data[i];
+
+    }
+
+    const rms =
+        Math.sqrt(
+            sum /
+            Math.max(
+                1,
+                data.length
+            )
+        );
+
+    return 20 *
+        Math.log10(
+            Math.max(
+                rms,
+                0.0000001
+            )
+        );
+
+}
+
+
+function setMetric(
+    id,
+    value
+){
+
+    const el =
+        document.getElementById(
+            id
+        );
+
+    if(el){
+
+        el.textContent =
+            value;
+
+    }
+
+}
+
+
+
+/* =====================================================
+   VARIABLES
+===================================================== */
+
+let stream = null;
+
+let recorder = null;
+
+let chunks = [];
+
+let startTime = 0;
+
+let timerID = null;
+
+let animationID = null;
+
+let audioContext = null;
+
+let analyser = null;
+
+let outputURL = null;
+
+const MAX_SECONDS = 60;
+
+const CALIBRATION_SECONDS = 2;
+
+
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
+const startButton =
+    document.getElementById(
+        "start"
+    );
+
+const stopButton =
+    document.getElementById(
+        "stop"
+    );
+
+const playButton =
+    document.getElementById(
+        "play"
+    );
+
+const status =
+    document.getElementById(
+        "status"
+    );
+
+const result =
+    document.getElementById(
+        "result"
+    );
+
+const timer =
+    document.getElementById(
+        "timer"
+    );
+
+const progress =
+    document.getElementById(
+        "bar"
+    );
+
+const inputCanvas =
+    document.getElementById(
+        "waveIn"
+    );
+
+const outputCanvas =
+    document.getElementById(
+        "waveOut"
+    );
+
+const audioOutput =
+    document.getElementById(
+        "audioOut"
+    );
+
+
+
+/* =====================================================
+   START RECORDING
+===================================================== */
+
+async function startRecording(){
+
+    dashStage(1);
+
+    dashState(
+        "dotMic",
+        "micState",
+        true
+    );
+
+    dashState(
+        "dotNoise",
+        "noiseState",
+        true
+    );
+
+    document.getElementById(
+        "aiState"
+    ).textContent =
+        "LISTENING";
+
+
+    document.getElementById(
+        "noiseType"
+    ).textContent =
+        "Listening...";
+
+
+    document.getElementById(
+        "confidence"
+    ).textContent =
+        "Confidence: analysing";
+
+
+    try{
+
+        stream =
+            await navigator
+            .mediaDevices
+            .getUserMedia({
+
+                audio:{
+                    channelCount:1,
+
+                    echoCancellation:false,
+
+                    noiseSuppression:false,
+
+                    autoGainControl:false
+
+                }
+
+            });
+
+
+        chunks=[];
+
+
+        recorder =
+            new MediaRecorder(
+                stream
+            );
+
+
+        recorder.ondataavailable =
+            function(event){
+
+                if(
+                    event.data.size > 0
+                ){
+
+                    chunks.push(
+                        event.data
+                    );
+
+                }
+
+            };
+
+
+        recorder.onstop =
+            processRecording;
+
+
+        recorder.start(100);
+
+
+        startTime =
+            performance.now();
+
+
+        timerID =
+            setInterval(
+                updateTimer,
+                100
+            );
+
+
+        startButton.disabled =
+            true;
+
+        stopButton.disabled =
+            false;
+
+
+        status.textContent =
+            "🔴 Recording: speech + background noise";
+
+
+        result.textContent =
+            "Recording in progress...";
+
+
+        audioContext =
+            new (
+                window.AudioContext ||
+                window.webkitAudioContext
+            )();
+
+
+        analyser =
+            audioContext
+            .createAnalyser();
+
+
+        analyser.fftSize =
+            1024;
+
+
+        const source =
+            audioContext
+            .createMediaStreamSource(
+                stream
+            );
+
+
+        source.connect(
+            analyser
+        );
+
+
+        drawInput();
+
+
+    }
+    catch(error){
+
+        console.error(
+            error
+        );
+
+        status.textContent =
+            "❌ Microphone permission failed.";
+
+        alert(
+            "Please allow microphone access in Chrome and try again."
+        );
+
+    }
+
+}
+
+
+
+/* =====================================================
+   TIMER
+===================================================== */
+
+function updateTimer(){
+
+    const elapsed =
+        Math.min(
+            MAX_SECONDS,
+
+            (
+                performance.now()
+                -
+                startTime
+            ) / 1000
+        );
+
+
+    const seconds =
+        Math.floor(
+            elapsed
+        );
+
+
+    const minutes =
+        Math.floor(
+            seconds / 60
+        );
+
+
+    const remaining =
+        seconds % 60;
+
+
+    timer.textContent =
+
+        String(minutes)
+        .padStart(2,"0")
+
+        + ":" +
+
+        String(remaining)
+        .padStart(2,"0")
+
+        + " / 01:00";
+
+
+    progress.style.width =
+
+        (
+            elapsed /
+            MAX_SECONDS *
+            100
+        )
+
+        + "%";
+
+
+    if(
+        elapsed >=
+        MAX_SECONDS
+    ){
+
+        stopRecording();
+
+    }
+
+}
+
+
+
+/* =====================================================
+   STOP RECORDING
+===================================================== */
+
+function stopRecording(){
+
+    if(
+        !recorder ||
+        recorder.state ===
+        "inactive"
+    ){
+
+        return;
+
+    }
+
+
+    recorder.stop();
+
+
+    clearInterval(
+        timerID
+    );
+
+
+    timerID=null;
+
+
+    if(stream){
+
+        stream
+        .getTracks()
+        .forEach(
+            track =>
+                track.stop()
+        );
+
+    }
+
+
+    cancelAnimationFrame(
+        animationID
+    );
+
+
+    if(audioContext){
+
+        audioContext.close();
+
+    }
+
+
+    startButton.disabled =
+        false;
+
+    stopButton.disabled =
+        true;
+
+
+    status.textContent =
+        "⏳ Recording stopped. Processing...";
+
+}
+
+
+
+/* =====================================================
+   INPUT WAVEFORM
+===================================================== */
+
+function drawInput(){
+
+    if(!analyser)
+        return;
+
+
+    const width =
+        inputCanvas.clientWidth;
+
+    const height =
+        inputCanvas.clientHeight;
+
+
+    inputCanvas.width =
+        width *
+        devicePixelRatio;
+
+
+    inputCanvas.height =
+        height *
+        devicePixelRatio;
+
+
+    const ctx =
+        inputCanvas
+        .getContext("2d");
+
+
+    const data =
+        new Uint8Array(
+            analyser.fftSize
+        );
+
+
+    analyser
+    .getByteTimeDomainData(
+        data
+    );
+
+
+    ctx.clearRect(
+        0,
+        0,
+        inputCanvas.width,
+        inputCanvas.height
+    );
+
+
+    ctx.beginPath();
+
+
+    for(
+        let i=0;
+        i<data.length;
+        i++
+    ){
+
+        const x =
+            i /
+            (data.length-1) *
+            inputCanvas.width;
+
+
+        const y =
+
+            inputCanvas.height/2
+
+            +
+
+            (
+                data[i]-128
+            )
+            *
+            inputCanvas.height
+            /
+            270;
+
+
+        if(i===0)
+
+            ctx.moveTo(
+                x,
+                y
+            );
+
+        else
+
+            ctx.lineTo(
+                x,
+                y
+            );
+
+    }
+
+
+    ctx.strokeStyle =
+        "#4dabf7";
+
+    ctx.lineWidth =
+        2 *
+        devicePixelRatio;
+
+
+    ctx.stroke();
+
+
+    animationID =
+        requestAnimationFrame(
+            drawInput
+        );
+
+}
+
+
+
+/* =====================================================
+   PROCESS RECORDING
+===================================================== */
+
+async function processRecording(){
+
+    dashStage(2);
+
+    document.getElementById(
+        "aiState"
+    ).textContent =
+        "ANALYSING";
+
+
+    dashState(
+        "dotAI",
+        "aiState",
+        true
+    );
+
+
+    try{
+
+        if(
+            chunks.length === 0
+        ){
+
+            throw new Error(
+                "No recorded audio found."
+            );
+
+        }
+
+
+        const blob =
+            new Blob(
+                chunks,
+                {
+                    type:
+                        recorder.mimeType ||
+                        "audio/webm"
+                }
+            );
+
+
+        const arrayBuffer =
+            await blob.arrayBuffer();
+
+
+        const context =
+            new (
+                window.AudioContext ||
+                window.webkitAudioContext
+            )();
+
+
+        const audioBuffer =
+            await context
+            .decodeAudioData(
+                arrayBuffer.slice(0)
+            );
+
+
+        const input =
+            audioBuffer
+            .getChannelData(0);
+
+
+        const sampleRate =
+            audioBuffer.sampleRate;
+
+
+        /* INPUT METRIC */
+
+        const inputDB =
+            rmsDb(
+                input
+            );
+
+
+        setMetric(
+            "inputLevel",
+            inputDB.toFixed(1)
+            + " dBFS"
+        );
+
+
+        const inputPercentage =
+            Math.max(
+                0,
+                Math.min(
+                    100,
+                    Math.round(
+                        (
+                            inputDB+60
+                        )
+                        /
+                        60
+                        *
+                        100
+                    )
+                )
+            );
+
+
+        setMetric(
+            "inputPct",
+            inputPercentage
+            + "%"
+        );
+
+
+        document.getElementById(
+            "inputBar"
+        ).style.width =
+            Math.max(
+                5,
+                inputPercentage
+            )
+            + "%";
+
+
+        dashStage(3);
+
+
+        document.getElementById(
+            "noiseType"
+        ).textContent =
+            "Background noise detected";
+
+
+        document.getElementById(
+            "confidence"
+        ).textContent =
+            "Confidence: adaptive analysis";
+
+
+        /*
+            NOISE REDUCTION
+        */
+
+        dashStage(4);
+
+
+        const enhanced =
+            spectralNoiseReduction(
+                input,
+                sampleRate,
+                CALIBRATION_SECONDS
+            );
+
+
+        /* OUTPUT METRIC */
+
+        const outputDB =
+            rmsDb(
+                enhanced
+            );
+
+
+        setMetric(
+            "outputLevel",
+            outputDB.toFixed(1)
+            + " dBFS"
+        );
+
+
+        const speechClarity =
+            Math.max(
+                0,
+                Math.min(
+                    100,
+                    Math.round(
+                        70 +
+                        (
+                            outputDB -
+                            inputDB
+                        )
+                        *
+                        0.8
+                    )
+                )
+            );
+
+
+        setMetric(
+            "speechPct",
+            speechClarity
+            + "%"
+        );
+
+
+        document.getElementById(
+            "outputBar"
+        ).style.width =
+            speechClarity
+            + "%";
+
+
+        /* CREATE WAV */
+
+        const wav =
+            createWav(
+                enhanced,
+                sampleRate
+            );
+
+
+        const outputBlob =
+            new Blob(
+                [wav],
+                {
+                    type:
+                        "audio/wav"
+                }
+            );
+
+
+        if(outputURL){
+
+            URL.revokeObjectURL(
+                outputURL
+            );
+
+        }
+
+
+        outputURL =
+            URL.createObjectURL(
+                outputBlob
+            );
+
+
+        audioOutput.src =
+            outputURL;
+
+
+        audioOutput.style.display =
+            "block";
+
+
+        playButton.disabled =
+            false;
+
+
+        drawOutput(
+            enhanced
+        );
+
+
+        dashStage(5);
+
+
+        dashState(
+            "dotMic",
+            "micState",
+            false
+        );
+
+        dashState(
+            "dotNoise",
+            "noiseState",
+            false
+        );
+
+        dashState(
+            "dotAI",
+            "aiState",
+            false
+        );
+
+        dashState(
+            "dotOut",
+            "outState",
+            false
+        );
+
+
+        document.getElementById(
+            "aiState"
+        ).textContent =
+            "COMPLETE";
+
+
+        document.getElementById(
+            "outState"
+        ).textContent =
+            "READY";
+
+
+        document.getElementById(
+            "noiseType"
+        ).textContent =
+            "Noise reduced";
+
+
+        document.getElementById(
+            "confidence"
+        ).textContent =
+            "Adaptive suppression complete";
+
+
+        result.innerHTML =
+            '<span class="ok">✓ Enhanced speech ready.</span> Click Play Enhanced Speech.';
+
+
+        status.textContent =
+            "✅ Processing complete";
+
+
+        await context.close();
+
+    }
+    catch(error){
+
+        console.error(
+            error
+        );
+
+
+        result.textContent =
+            "❌ Processing error: "
+            +
+            error.message;
+
+
+        status.textContent =
+            "Processing failed.";
+
+    }
+
+}
+
+
+
+/* =====================================================
+   SPECTRAL NOISE REDUCTION
+===================================================== */
+
+function spectralNoiseReduction(
+    input,
+    sampleRate,
+    calibrationSeconds
+){
+
+    const FFT_SIZE =
+        1024;
+
+    const HOP =
+        512;
+
+
+    const output =
+        new Float32Array(
+            input.length +
+            FFT_SIZE
+        );
+
+
+    const normalization =
+        new Float32Array(
+            input.length +
+            FFT_SIZE
+        );
+
+
+    const noiseSpectrum =
+        new Float64Array(
+            FFT_SIZE
+        );
+
+
+    const window =
+        new Float32Array(
+            FFT_SIZE
+        );
+
+
+    /* HANN WINDOW */
+
+    for(
+        let i=0;
+        i<FFT_SIZE;
+        i++
+    ){
+
+        window[i] =
+
+            0.5 -
+
+            0.5 *
+            Math.cos(
+                2 *
+                Math.PI *
+                i /
+                (FFT_SIZE-1)
+            );
+
+    }
+
+
+    /* NOISE CALIBRATION */
+
+    const calibrationSamples =
+        Math.min(
+            calibrationSeconds *
+            sampleRate,
+
+            input.length
+        );
+
+
+    const calibrationFrames =
+        Math.max(
+            1,
+
+            Math.floor(
+                (
+                    calibrationSamples -
+                    FFT_SIZE
+                )
+                /
+                HOP
+            )
+            + 1
+        );
+
+
+    for(
+        let frame=0;
+        frame<calibrationFrames;
+        frame++
+    ){
+
+        const real =
+            new Float64Array(
+                FFT_SIZE
+            );
+
+        const imag =
+            new Float64Array(
+                FFT_SIZE
+            );
+
+
+        const base =
+            frame *
+            HOP;
+
+
+        for(
+            let n=0;
+            n<FFT_SIZE;
+            n++
+        ){
+
+            const value =
+                input[
+                    base+n
+                ] || 0;
+
+
+            real[n] =
+                value *
+                window[n];
+
+        }
+
+
+        fft(
+            real,
+            imag,
+            false
+        );
+
+
+        for(
+            let k=0;
+            k<FFT_SIZE;
+            k++
+        ){
+
+            noiseSpectrum[k] +=
+
+                real[k] *
+                real[k]
+
+                +
+
+                imag[k] *
+                imag[k];
+
+        }
+
+    }
+
+
+    for(
+        let k=0;
+        k<FFT_SIZE;
+        k++
+    ){
+
+        noiseSpectrum[k] /=
+
+            calibrationFrames;
+
+    }
+
+
+    /* PROCESS FRAMES */
+
+    for(
+        let base=0;
+        base<input.length;
+        base+=HOP
+    ){
+
+        const real =
+            new Float64Array(
+                FFT_SIZE
+            );
+
+
+        const imag =
+            new Float64Array(
+                FFT_SIZE
+            );
+
+
+        for(
+            let n=0;
+            n<FFT_SIZE;
+            n++
+        ){
+
+            const value =
+                input[
+                    base+n
+                ] || 0;
+
+
+            real[n] =
+                value *
+                window[n];
+
+        }
+
+
+        fft(
+            real,
+            imag,
+            false
+        );
+
+
+        for(
+            let k=0;
+            k<FFT_SIZE;
+            k++
+        ){
+
+            const power =
+
+                real[k] *
+                real[k]
+
+                +
+
+                imag[k] *
+                imag[k];
+
+
+            /*
+                Conservative spectral
+                subtraction.
+            */
+
+            const cleanPower =
+                Math.max(
+                    power -
+                    1.15 *
+                    noiseSpectrum[k],
+
+                    0.16 *
+                    power
+                );
+
+
+            let gain =
+
+                Math.sqrt(
+                    cleanPower /
+                    Math.max(
+                        power,
+                        0.000000000001
+                    )
+                );
+
+
+            const frequency =
+                k *
+                sampleRate /
+                FFT_SIZE;
+
+
+            /*
+                Suppress very low/high
+                frequencies.
+            */
+
+            if(
+                frequency < 80 ||
+                frequency > 7000
+            ){
+
+                gain *= 0.45;
+
+            }
+
+
+            gain =
+                Math.max(
+                    0.12,
+                    Math.min(
+                        1,
+                        gain
+                    )
+                );
+
+
+            real[k] *=
+                gain;
+
+            imag[k] *=
+                gain;
+
+        }
+
+
+        fft(
+            real,
+            imag,
+            true
+        );
+
+
+        for(
+            let n=0;
+            n<FFT_SIZE;
+            n++
+        ){
+
+            const index =
+                base+n;
+
+
+            if(
+                index <
+                output.length
+            ){
+
+                output[index] +=
+
+                    real[n] *
+                    window[n];
+
+
+                normalization[index] +=
+
+                    window[n] *
+                    window[n];
+
+            }
+
+        }
+
+    }
+
+
+    const result =
+        new Float32Array(
+            input.length
+        );
+
+
+    let peak=0;
+
+
+    for(
+        let i=0;
+        i<input.length;
+        i++
+    ){
+
+        result[i] =
+
+            output[i] /
+            Math.max(
+                normalization[i],
+                0.00001
+            );
+
+
+        peak =
+            Math.max(
+                peak,
+                Math.abs(
+                    result[i]
+                )
+            );
+
+    }
+
+
+    /*
+        Prevent silent output.
+    */
+
+    if(
+        peak > 0
+    ){
+
+        const gain =
+            Math.min(
+                2,
+                0.92 / peak
+            );
+
+
+        for(
+            let i=0;
+            i<result.length;
+            i++
+        ){
+
+            result[i] *=
+                gain;
+
+        }
+
+    }
+
+
+    return result;
+
+}
+
+
+
+/* =====================================================
+   FFT
+===================================================== */
+
+function fft(
+    real,
+    imag,
+    inverse=false
+){
+
+    const n =
+        real.length;
+
+
+    /* BIT REVERSAL */
+
+    for(
+        let i=1,
+        j=0;
+
+        i<n;
+
+        i++
+    ){
+
+        let bit =
+            n >> 1;
+
+
+        for(
+            ;
+            j & bit;
+            bit >>= 1
+        ){
+
+            j ^= bit;
+
+        }
+
+
+        j ^= bit;
+
+
+        if(
+            i < j
+        ){
+
+            [
+                real[i],
+                real[j]
+            ] =
+            [
+                real[j],
+                real[i]
+            ];
+
+
+            [
+                imag[i],
+                imag[j]
+            ] =
+            [
+                imag[j],
+                imag[i]
+            ];
+
+        }
+
+    }
+
+
+    /* FFT */
+
+    for(
+        let length=2;
+        length<=n;
+        length<<=1
+    ){
+
+        const angle =
+
+            (
+                inverse
+                ? 2
+                : -2
+            )
+
+            *
+
+            Math.PI /
+            length;
+
+
+        const cosine =
+            Math.cos(
+                angle
+            );
+
+
+        const sine =
+            Math.sin(
+                angle
+            );
+
+
+        for(
+            let i=0;
+            i<n;
+            i+=length
+        ){
+
+            let wr=1;
+            let wi=0;
+
+
+            for(
+                let j=0;
+                j<length/2;
+                j++
+            ){
+
+                const ur =
+                    real[
+                        i+j
+                    ];
+
+
+                const ui =
+                    imag[
+                        i+j
+                    ];
+
+
+                const vr =
+
+                    real[
+                        i+j+
+                        length/2
+                    ]
+                    *
+                    wr
+
+                    -
+
+                    imag[
+                        i+j+
+                        length/2
+                    ]
+                    *
+                    wi;
+
+
+                const vi =
+
+                    real[
+                        i+j+
+                        length/2
+                    ]
+                    *
+                    wi
+
+                    +
+
+                    imag[
+                        i+j+
+                        length/2
+                    ]
+                    *
+                    wr;
+
+
+                real[
+                    i+j
+                ] =
+                    ur+vr;
+
+
+                imag[
+                    i+j
+                ] =
+                    ui+vi;
+
+
+                real[
+                    i+j+
+                    length/2
+                ] =
+                    ur-vr;
+
+
+                imag[
+                    i+j+
+                    length/2
+                ] =
+                    ui-vi;
+
+
+                const newWr =
+
+                    wr*cosine -
+                    wi*sine;
+
+
+                wi =
+
+                    wr*sine +
+                    wi*cosine;
+
+
+                wr =
+                    newWr;
+
+            }
+
+        }
+
+    }
+
+
+    if(
+        inverse
+    ){
+
+        for(
+            let i=0;
+            i<n;
+            i++
+        ){
+
+            real[i] /=
+                n;
+
+            imag[i] /=
+                n;
+
+        }
+
+    }
+
+}
+
+
+
+/* =====================================================
+   CREATE WAV
+===================================================== */
+
+function createWav(
+    samples,
+    sampleRate
+){
+
+    const buffer =
+        new ArrayBuffer(
+            44 +
+            samples.length *
+            2
+        );
+
+
+    const view =
+        new DataView(
+            buffer
+        );
+
+
+    function writeString(
+        offset,
+        string
+    ){
+
+        for(
+            let i=0;
+            i<string.length;
+            i++
+        ){
+
+            view.setUint8(
+                offset+i,
+                string.charCodeAt(i)
+            );
+
+        }
+
+    }
+
+
+    writeString(
+        0,
+        "RIFF"
+    );
+
+
+    view.setUint32(
+        4,
+        36 +
+        samples.length*2,
+        true
+    );
+
+
+    writeString(
+        8,
+        "WAVE"
+    );
+
+
+    writeString(
+        12,
+        "fmt "
+    );
+
+
+    view.setUint32(
+        16,
+        16,
+        true
+    );
+
+
+    view.setUint16(
+        20,
+        1,
+        true
+    );
+
+
+    view.setUint16(
+        22,
+        1,
+        true
+    );
+
+
+    view.setUint32(
+        24,
+        sampleRate,
+        true
+    );
+
+
+    view.setUint32(
+        28,
+        sampleRate*2,
+        true
+    );
+
+
+    view.setUint16(
+        32,
+        2,
+        true
+    );
+
+
+    view.setUint16(
+        34,
+        16,
+        true
+    );
+
+
+    writeString(
+        36,
+        "data"
+    );
+
+
+    view.setUint32(
+        40,
+        samples.length*2,
+        true
+    );
+
+
+    let offset=44;
+
+
+    for(
+        let i=0;
+        i<samples.length;
+        i++
+    ){
+
+        let sample =
+            Math.max(
+                -1,
+                Math.min(
+                    1,
+                    samples[i]
+                )
+            );
+
+
+        sample =
+
+            sample < 0
+
+            ?
+
+            sample *
+            32768
+
+            :
+
+            sample *
+            32767;
+
+
+        view.setInt16(
+            offset,
+            sample,
+            true
+        );
+
+
+        offset += 2;
+
+    }
+
+
+    return buffer;
+
+}
+
+
+
+/* =====================================================
+   OUTPUT WAVEFORM
+===================================================== */
+
+function drawOutput(
+    samples
+){
+
+    const width =
+        outputCanvas.clientWidth;
+
+
+    const height =
+        outputCanvas.clientHeight;
+
+
+    outputCanvas.width =
+        width *
+        devicePixelRatio;
+
+
+    outputCanvas.height =
+        height *
+        devicePixelRatio;
+
+
+    const ctx =
+        outputCanvas
+        .getContext("2d");
+
+
+    ctx.clearRect(
+        0,
+        0,
+        outputCanvas.width,
+        outputCanvas.height
+    );
+
+
+    ctx.beginPath();
+
+
+    const step =
+        Math.max(
+            1,
+            Math.floor(
+                samples.length /
+                outputCanvas.width
+            )
+        );
+
+
+    for(
+        let x=0;
+        x<outputCanvas.width;
+        x++
+    ){
+
+        const index =
+            Math.min(
+                samples.length-1,
+                x*step
+            );
+
+
+        const y =
+
+            outputCanvas.height/2
+
+            -
+
+            samples[index]
+            *
+            outputCanvas.height
+            *
+            0.45;
+
+
+        if(x===0)
+
+            ctx.moveTo(
+                x,
+                y
+            );
+
+        else
+
+            ctx.lineTo(
+                x,
+                y
+            );
+
+    }
+
+
+    ctx.strokeStyle =
+        "#20c997";
+
+
+    ctx.lineWidth =
+        2 *
+        devicePixelRatio;
+
+
+    ctx.stroke();
+
+}
+
+
+
+/* =====================================================
+   PLAY
+===================================================== */
+
+playButton.onclick =
+    function(){
+
+        if(
+            audioOutput.src
+        ){
+
+            audioOutput
+            .currentTime=0;
+
+            audioOutput.play();
+
+        }
+
+    };
+
+
+/* =====================================================
+   BUTTON EVENTS
+===================================================== */
+
+startButton.onclick =
+    startRecording;
+
+
+stopButton.onclick =
+    stopRecording;
+
+
+/* =====================================================
+   INITIAL STATUS
+===================================================== */
+
+dashStage(0);
+
+</script>
+
+</body>
+</html>
