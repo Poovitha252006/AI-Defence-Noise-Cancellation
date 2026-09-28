@@ -2374,10 +2374,10 @@ function spectralNoiseReduction(
             const cleanPower =
                 Math.max(
                     power -
-                    1.15 *
+                    0.85*
                     noiseSpectrum[k],
 
-                    0.16 *
+                    0.30*
                     power
                 );
 
